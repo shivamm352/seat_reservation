@@ -13,11 +13,6 @@ import java.util.UUID;
 
 /**
  * Repository for {@link ShowSeat} entities.
- *
- * <p>The key method {@link #findSeatsForUpdate} issues a
- * {@code SELECT ... FOR UPDATE} to acquire pessimistic write locks on
- * specific seat rows. This prevents concurrent transactions from booking
- * the same seats simultaneously.
  */
 @Repository
 public interface ShowSeatRepository extends JpaRepository<ShowSeat, UUID> {
@@ -25,15 +20,6 @@ public interface ShowSeatRepository extends JpaRepository<ShowSeat, UUID> {
     /**
      * Fetches the requested seats and immediately acquires exclusive row locks
      * ({@code SELECT ... FOR UPDATE}).
-     *
-     * <p><b>Must be called inside a {@code @Transactional} method.</b>
-     * The lock is held until the surrounding transaction commits or rolls back.
-     * Results are ordered by seat number to ensure consistent lock acquisition
-     * order across concurrent transactions and prevent deadlocks.
-     *
-     * @param showId      The show whose seats are being locked.
-     * @param seatNumbers The specific seat labels to lock.
-     * @return Locked seat entities ready for status update.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT s FROM ShowSeat s " +
@@ -45,8 +31,14 @@ public interface ShowSeatRepository extends JpaRepository<ShowSeat, UUID> {
             @Param("seatNumbers") List<String> seatNumbers);
 
     /**
+     * Locks specific seats by their primary keys in ascending order of seatNumber.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT s FROM ShowSeat s WHERE s.id IN :seatIds ORDER BY s.seatNumber ASC")
+    List<ShowSeat> findSeatsByIdsForUpdate(@Param("seatIds") List<UUID> seatIds);
+
+    /**
      * Retrieves all seats for a show, ordered by seat number.
-     * Used by the seat availability endpoint.
      */
     List<ShowSeat> findByShowIdOrderBySeatNumberAsc(UUID showId);
 }

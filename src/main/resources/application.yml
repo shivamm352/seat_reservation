@@ -77,7 +77,16 @@ management:
       base-path: /actuator
   endpoint:
     health:
-      show-details: when-authorized
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+    db:
+      enabled: true
   metrics:
     export:
       prometheus:
