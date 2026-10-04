@@ -97,3 +97,11 @@ logging:
     com.zaxxer.hikari: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+
+# ===== JWT Configuration =====
+jwt:
+  # HMAC-SHA256 signing secret — must be >= 32 bytes (256 bits).
+  # This 48-char key = 384-bit secret. Replace with a secrets-manager value in production.
+  secret: "paytm-money-seat-reservation-secret-key-256bit!!"
+  # Token validity: 24 hours (milliseconds)
+  expiration-ms: 86400000
