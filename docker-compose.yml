@@ -1,0 +1,86 @@
+version: "3.9"
+
+# ============================================================
+# Named Volumes
+#   Persists PostgreSQL data across container restarts.
+#   Without this, every `docker compose down` wipes your DB.
+# ============================================================
+volumes:
+  postgres_data:
+    driver: local
+
+# ============================================================
+# Network
+#   Isolated bridge network so containers communicate by
+#   service name (e.g., host=postgres) without exposing
+#   internal ports to the host unnecessarily.
+# ============================================================
+networks:
+  ticketbooking-net:
+    driver: bridge
+
+services:
+
+  # ==========================================================
+  # Service: postgres
+  #   PostgreSQL 16 on Alpine (smallest official image ~80MB).
+  # ==========================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: ticketbooking-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ticketbooking
+      POSTGRES_USER: tbuser
+      POSTGRES_PASSWORD: tbpassword
+      # Tune shared_buffers for container (25% of container RAM is a good default)
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --locale=C"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ticketbooking-net
+    # HealthCheck: pg_isready confirms PG is accepting connections.
+    # The app service will NOT start until this passes.
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U tbuser -d ticketbooking" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================================
+  # Service: app
+  #   Spring Boot application built from local Dockerfile.
+  # ==========================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ticketbooking-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      # Override application.yml datasource with Docker service hostname
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/ticketbooking
+      SPRING_DATASOURCE_USERNAME: tbuser
+      SPRING_DATASOURCE_PASSWORD: tbpassword
+      # Active profile (can override: -e SPRING_PROFILES_ACTIVE=prod)
+      SPRING_PROFILES_ACTIVE: default
+      # JVM timezone
+      TZ: Asia/Kolkata
+    networks:
+      - ticketbooking-net
+    # Strict ordering: app ONLY starts after postgres healthcheck passes.
+    # "service_started" is insufficient — PG needs to be ready for connections.
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

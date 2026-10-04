@@ -1,0 +1,83 @@
+# ===== Compiled Output =====
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# ===== Maven Wrapper (keep the jar, ignore downloaded files) =====
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ===== IntelliJ IDEA =====
+.idea/
+*.iws
+*.iml
+*.ipr
+.idea/modules.xml
+.idea/jarRepositories.xml
+.idea/compiler.xml
+.idea/libraries/
+
+# ===== Eclipse / STS =====
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# ===== VS Code =====
+.vscode/
+*.code-workspace
+
+# ===== NetBeans =====
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ===== OS Files =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ===== Environment & Secrets =====
+.env
+.env.*
+*.env
+!.env.example
+application-local.yml
+application-prod.yml
+application-secrets.yml
+
+# ===== Docker =====
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ===== Logs =====
+logs/
+*.log
+*.log.*
+spring.log
+
+# ===== Test & Coverage Reports =====
+/coverage/
+*.exec
+/site/
+
+# ===== Kotlin (if added later) =====
+.kotlin/

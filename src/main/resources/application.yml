@@ -1,0 +1,99 @@
+spring:
+  application:
+    name: ticket-booking
+
+  # ===== DataSource & HikariCP Connection Pool =====
+  datasource:
+    url: jdbc:postgresql://localhost:5432/ticketbooking
+    username: tbuser
+    password: tbpassword
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      # Max connections in pool — sized for free-tier PG (~25 total limit)
+      maximum-pool-size: 20
+      # Warm connections kept alive to absorb burst traffic immediately
+      minimum-idle: 10
+      # Fail fast: throw exception after 5s instead of queuing 30s under load
+      connection-timeout: 5000
+      # Reclaim idle connections after 5 minutes
+      idle-timeout: 300000
+      # Recycle connection before PostgreSQL server-side timeout (~1h)
+      max-lifetime: 1800000
+      pool-name: HikariPool-TicketBooking
+      # Enable connection leak detection in development (30s threshold)
+      leak-detection-threshold: 30000
+
+  # ===== JPA / Hibernate =====
+  jpa:
+    # NEVER keep a DB connection open for the full HTTP request lifecycle
+    open-in-view: false
+    # Disabled: synchronous console SQL output is a bottleneck under load
+    show-sql: false
+    hibernate:
+      # Flyway owns DDL — JPA only validates schema at startup
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        # Batch inserts/updates for bulk operations
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+
+  # ===== Flyway Schema Migration =====
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
+# ===== Server & Tomcat Thread Pool =====
+server:
+  port: 8080
+  tomcat:
+    threads:
+      # Cap at 50 to prevent CPU exhaustion on free-tier (2 vCPU)
+      max: 50
+      # Minimum threads kept warm for low-latency responses
+      min-spare: 10
+    # OS-level connection backlog queue for burst absorption
+    accept-count: 200
+    connection-timeout: 20000
+  # Compress responses >= 2KB (JSON payloads)
+  compression:
+    enabled: true
+    min-response-size: 2048
+    mime-types: application/json,application/xml,text/plain
+
+# ===== Actuator & Monitoring =====
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only expose necessary endpoints — no sensitive data
+        include: health, info, prometheus, metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  # Tag all metrics with app name for Grafana filtering
+  observations:
+    key-values:
+      application: ${spring.application.name}
+
+# ===== Logging =====
+logging:
+  level:
+    root: INFO
+    com.paytmmoney.ticketbooking: DEBUG
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    com.zaxxer.hikari: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
