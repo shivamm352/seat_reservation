@@ -1,29 +1,24 @@
 # ============================================================
 # Stage 1: Builder
-#   Uses full JDK + Maven to compile and package the fat JAR.
-#   This stage is discarded — its artifacts don't reach prod.
+#   Uses Maven on Alpine to compile and package the fat JAR.
+#   Leverages Docker layer caching for dependencies.
 # ============================================================
-FROM eclipse-temurin:17-jdk-alpine AS builder
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
 
 WORKDIR /build
 
-# Copy Maven wrapper and pom.xml first to leverage Docker layer caching.
-# If pom.xml is unchanged, this layer is reused and dependencies
-# are NOT re-downloaded on every build.
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
+# Copy pom.xml and cache dependencies
+COPY pom.xml ./
+RUN mvn dependency:go-offline -B
 
-# Pre-download all dependencies into the cache layer
-RUN ./mvnw dependency:go-offline -B
-
-# Copy source and build the fat JAR (skip tests — tests run in CI)
+# Copy source and build fat JAR (skip unit/integration tests during image build)
 COPY src ./src
-RUN ./mvnw package -DskipTests -B
+RUN mvn package -DskipTests -B
 
 # ============================================================
 # Stage 2: Runner
 #   Minimal JRE-only image — no JDK, no Maven, no source code.
-#   Final image size: ~180MB vs ~600MB for a single-stage build.
+#   Final image size: ~180MB.
 # ============================================================
 FROM eclipse-temurin:17-jre-alpine AS runner
 
@@ -44,12 +39,11 @@ USER appuser
 EXPOSE 8080
 
 # JVM tuning flags:
-#   -XX:+UseContainerSupport      → JVM reads cgroup memory limits (not host RAM)
-#   -XX:MaxRAMPercentage=75.0     → Use up to 75% of container RAM for heap;
-#                                   reserves 25% for OS + off-heap (Netty, Metaspace)
-#   -XX:+UseG1GC                  → G1 garbage collector: best balance of
-#                                   throughput and low pause times
-#   -Djava.security.egd=...       → Faster SecureRandom init (critical for JWT signing)
+#   -XX:+UseContainerSupport      → JVM reads cgroup memory limits
+#   -XX:MaxRAMPercentage=75.0     → Use up to 75% of container RAM for heap
+#   -XX:+UseG1GC                  → G1 garbage collector for low latency
+#   -XX:MaxGCPauseMillis=200      → Target GC pause time
+#   -Djava.security.egd=...       → Faster SecureRandom init for JWT
 ENTRYPOINT ["java", \
     "-XX:+UseContainerSupport", \
     "-XX:MaxRAMPercentage=75.0", \
