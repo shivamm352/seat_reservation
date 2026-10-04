@@ -1,0 +1,37 @@
+services:
+  # Web application service running Spring Boot in Docker
+  - type: web
+    name: ticket-booking-service
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: standard
+    region: oregon
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: ticketbooking-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: ticketbooking-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: ticketbooking-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: TZ
+        value: Asia/Kolkata
+    healthCheckPath: /actuator/health
+
+databases:
+  # Managed PostgreSQL 16 database
+  - name: ticketbooking-db
+    databaseName: ticketbooking
+    user: tbuser
+    plan: standard
+    region: oregon
+    postgresMajorVersion: 16
