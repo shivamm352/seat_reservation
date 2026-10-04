@@ -1,20 +1,30 @@
 package com.paytmmoney.ticketbooking.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.paytmmoney.ticketbooking.entity.ShowSeat;
-import com.paytmmoney.ticketbooking.enums.SeatStatus;
 
 /**
- * Lightweight read-only view of a single seat.
- *
- * @param seatNumber  Label of the seat (e.g., "A1", "B12").
- * @param status      Current availability status of the seat.
+ * Read-only view of a single seat.
+ * Emits {"seat": "A1", "status": "available"} per assignment specification.
  */
 public record SeatDto(
-        String seatNumber,
-        SeatStatus status
+        @JsonProperty("seat")
+        @JsonAlias({"seat", "seatNumber"})
+        String seat,
+
+        @JsonProperty("status")
+        String status
 ) {
-    /** Static factory — maps a {@link ShowSeat} entity to this DTO. */
+    @JsonProperty("seatNumber")
+    public String seatNumber() {
+        return seat;
+    }
+
     public static SeatDto from(ShowSeat seat) {
-        return new SeatDto(seat.getSeatNumber(), seat.getStatus());
+        return new SeatDto(
+                seat.getSeatNumber(),
+                seat.getStatus().name().toLowerCase()
+        );
     }
 }

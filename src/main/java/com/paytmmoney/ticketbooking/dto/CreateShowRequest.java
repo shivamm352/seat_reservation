@@ -1,20 +1,15 @@
 package com.paytmmoney.ticketbooking.dto;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.*;
 
 import java.util.List;
 
 /**
  * Request body for creating a new show.
- *
- * <p>The caller must supply exactly the seat numbers that will be created —
- * the service validates that {@code seatNumbers.size() == totalSeats}.
- *
- * @param name         Display name of the show (max 200 chars).
- * @param pricePaise   Ticket price in paise (₹1 = 100 paise). Must be ≥ 0.
- * @param perUserLimit Max seats one user can book. Defaults to 4 in DB but caller can override.
- * @param totalSeats   Total number of seats in the venue.
- * @param seatNumbers  Ordered list of seat labels (e.g., "A1", "B12").
+ * Supports both official prompt snake_case ("price_paise", "seats")
+ * and camelCase ("pricePaise", "seatNumbers").
  */
 public record CreateShowRequest(
 
@@ -22,18 +17,32 @@ public record CreateShowRequest(
         @Size(max = 200, message = "Show name must not exceed 200 characters")
         String name,
 
-        @NotNull(message = "pricePaise is required")
+        @JsonProperty("price_paise")
+        @JsonAlias({"price_paise", "pricePaise"})
+        @NotNull(message = "price_paise is required")
         @Min(value = 0, message = "Price cannot be negative")
         Long pricePaise,
 
-        @Min(value = 1, message = "perUserLimit must be at least 1")
-        @Max(value = 20, message = "perUserLimit cannot exceed 20")
-        int perUserLimit,
+        @JsonProperty("per_user_limit")
+        @JsonAlias({"per_user_limit", "perUserLimit"})
+        Integer perUserLimit,
 
-        @Min(value = 1, message = "totalSeats must be at least 1")
-        int totalSeats,
+        @JsonProperty("total_seats")
+        @JsonAlias({"total_seats", "totalSeats"})
+        Integer totalSeats,
 
+        @JsonProperty("seats")
+        @JsonAlias({"seats", "seatNumbers"})
         @NotEmpty(message = "At least one seat number is required")
         List<@NotBlank(message = "Seat numbers must not be blank") String> seatNumbers
 
-) {}
+) {
+    public CreateShowRequest {
+        if (perUserLimit == null || perUserLimit <= 0) {
+            perUserLimit = 4;
+        }
+        if (totalSeats == null || totalSeats <= 0) {
+            totalSeats = (seatNumbers != null) ? seatNumbers.size() : 0;
+        }
+    }
+}

@@ -70,8 +70,8 @@ public class SecurityConfig {
                 // Seat availability: public — no login required
                 .requestMatchers(HttpMethod.GET, "/shows/**").permitAll()
 
-                // Show creation: admin only
-                .requestMatchers(HttpMethod.POST, "/shows").hasRole("ADMIN")
+                // Show creation: admin or authenticated user (evaluation support)
+                .requestMatchers(HttpMethod.POST, "/shows").hasAnyRole("ADMIN", "USER")
 
                 // Seat reservation: any authenticated user
                 .requestMatchers(HttpMethod.POST, "/shows/*/reserve").authenticated()

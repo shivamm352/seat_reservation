@@ -46,9 +46,9 @@ public class ShowServiceImpl implements ShowService {
         List<ShowSeat> seats = request.seatNumbers().stream()
                 .map(seatNumber -> new ShowSeat(savedShow, seatNumber))
                 .toList();
-        showSeatRepository.saveAll(seats);
+        List<ShowSeat> savedSeats = showSeatRepository.saveAll(seats);
 
-        return ShowResponse.from(savedShow);
+        return ShowResponse.of(savedShow, savedSeats);
     }
 
     @Override
@@ -56,7 +56,8 @@ public class ShowServiceImpl implements ShowService {
     public ShowResponse getShow(UUID id) {
         Show show = showRepository.findById(id)
                 .orElseThrow(() -> new ShowNotFoundException("Show not found with id: " + id));
-        return ShowResponse.from(show);
+        List<ShowSeat> seats = showSeatRepository.findByShowIdOrderBySeatNumberAsc(id);
+        return ShowResponse.of(show, seats);
     }
 
     @Override

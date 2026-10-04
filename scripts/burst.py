@@ -40,10 +40,8 @@ async def create_show(session: aiohttp.ClientSession, base_url: str, admin_token
 
     payload = {
         "name": f"Mega On-Sale Arena - {uuid.uuid4().hex[:6]}",
-        "pricePaise": 25000,
-        "perUserLimit": 4,
-        "totalSeats": len(seat_labels),
-        "seatNumbers": seat_labels
+        "price_paise": 25000,
+        "seats": seat_labels
     }
 
     headers = {
@@ -66,9 +64,8 @@ async def send_reservation(session: aiohttp.ClientSession, base_url: str, token:
         "Idempotency-Key": idempotency_key
     }
     payload = {
-        "showId": show_id,
-        "seatNumbers": seats,
-        "idempotencyKey": idempotency_key
+        "seats": seats,
+        "idempotency_key": idempotency_key
     }
     start = time.perf_counter()
     try:
@@ -106,7 +103,7 @@ async def run_burst_test(base_url: str):
         admin_token = await fetch_token(session, base_url, "admin_user", role="ADMIN")
         show = await create_show(session, base_url, admin_token)
         show_id = show["id"]
-        total_seats = show["totalSeats"]
+        total_seats = show.get("total_seats", show.get("totalSeats"))
         print(f"{GREEN}✓ Created Show ID: {show_id} with {total_seats} seats{RESET}")
 
         summary = {}
@@ -206,13 +203,14 @@ async def run_burst_test(base_url: str):
         # -------------------------------------------------------------
         # Phase 5: Reconciliation Verification
         # -------------------------------------------------------------
-        print(f"\n{BOLD}[Phase 5] Reconciliation Query: Verifying seat integrity invariant...{RESET}")
-        async with session.get(f"{base_url}/shows/{show_id}/seats") as seat_resp:
-            seats_data = await seat_resp.json()
+        print(f"\n{BOLD}[Phase 5] Reconciliation Query: Verifying seat integrity invariant via GET /shows/{show_id}...{RESET}")
+        async with session.get(f"{base_url}/shows/{show_id}") as show_resp:
+            show_data = await show_resp.json()
 
-        available_count = sum(1 for s in seats_data if s["status"] == "AVAILABLE")
-        held_count = sum(1 for s in seats_data if s["status"] == "HELD")
-        confirmed_count = sum(1 for s in seats_data if s["status"] == "CONFIRMED")
+        counts = show_data.get("counts", {})
+        available_count = counts.get("available", 0)
+        held_count = counts.get("held", 0)
+        confirmed_count = counts.get("confirmed", 0)
         sum_total = available_count + held_count + confirmed_count
 
         expected_confirmed = 1 + 4 + 1  # 1 from Phase 1 (A12), 4 from Phase 2 (B1..B4), 1 from Phase 3 (C1)

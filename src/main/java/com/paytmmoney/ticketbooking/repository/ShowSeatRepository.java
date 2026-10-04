@@ -1,6 +1,7 @@
 package com.paytmmoney.ticketbooking.repository;
 
 import com.paytmmoney.ticketbooking.entity.ShowSeat;
+import com.paytmmoney.ticketbooking.enums.SeatStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -41,4 +42,9 @@ public interface ShowSeatRepository extends JpaRepository<ShowSeat, UUID> {
      * Retrieves all seats for a show, ordered by seat number.
      */
     List<ShowSeat> findByShowIdOrderBySeatNumberAsc(UUID showId);
+
+    /**
+     * Counts seats by status across all shows (used for Prometheus gauge).
+     */
+    long countByStatus(SeatStatus status);
 }
