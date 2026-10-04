@@ -1,5 +1,13 @@
 # Engineering Writeup: Seat Reservation at Scale
 
+* **Live Service URL:** [`https://ticket-booking-service-production-27ac.up.railway.app`](https://ticket-booking-service-production-27ac.up.railway.app)
+* **Health / Liveness:** [`https://ticket-booking-service-production-27ac.up.railway.app/actuator/health/liveness`](https://ticket-booking-service-production-27ac.up.railway.app/actuator/health/liveness)
+* **Health / Readiness:** [`https://ticket-booking-service-production-27ac.up.railway.app/actuator/health/readiness`](https://ticket-booking-service-production-27ac.up.railway.app/actuator/health/readiness)
+* **Prometheus Metrics:** [`https://ticket-booking-service-production-27ac.up.railway.app/actuator/prometheus`](https://ticket-booking-service-production-27ac.up.railway.app/actuator/prometheus)
+* **Public GitHub Repository:** [`https://github.com/shivamm352/seat_reservation`](https://github.com/shivamm352/seat_reservation)
+
+---
+
 ## 1. The Atomic Decision: Deterministic Row-Level Locking
 
 ### Concurrency Dilemma

@@ -9,6 +9,16 @@ A production-grade, highly concurrent seat reservation service built with Spring
 
 ---
 
+## 🌐 Live Production Deployment
+
+* **Live Base URL:** [`https://ticket-booking-service-production-27ac.up.railway.app`](https://ticket-booking-service-production-27ac.up.railway.app)
+* **Health Liveness:** [`https://ticket-booking-service-production-27ac.up.railway.app/actuator/health/liveness`](https://ticket-booking-service-production-27ac.up.railway.app/actuator/health/liveness)
+* **Health Readiness (DB Dependency Check):** [`https://ticket-booking-service-production-27ac.up.railway.app/actuator/health/readiness`](https://ticket-booking-service-production-27ac.up.railway.app/actuator/health/readiness)
+* **Prometheus Metrics:** [`https://ticket-booking-service-production-27ac.up.railway.app/actuator/prometheus`](https://ticket-booking-service-production-27ac.up.railway.app/actuator/prometheus)
+
+
+---
+
 ## 🏛️ System Architecture
 
 ```
@@ -74,15 +84,19 @@ curl -i http://localhost:8080/actuator/health/readiness
 
 ## ⚡ High-Throughput Burst Script (`burst.sh`)
 
-Test the system under extreme load (500-thread hot-seat race, user limits, and idempotent retries) in a single command:
+Test the system under extreme load (500-thread hot-seat race, user limits, and idempotent retries) in a single command against the live deployment or local container:
 
 ```bash
-# Make executable and run against local or cloud endpoint
+# Against Live Production Deployment:
+./burst.sh https://ticket-booking-service-production-27ac.up.railway.app
+
+# Or against Localhost:
 chmod +x burst.sh
 ./burst.sh http://localhost:8080
-```
 
-*(On Windows PowerShell, run: `.\burst.ps1 http://localhost:8080`)*
+# On Windows PowerShell:
+.\burst.ps1 https://ticket-booking-service-production-27ac.up.railway.app
+```
 
 ### Test Phases Executed:
 1. **Hot Seat Storm:** 500 concurrent users compete for seat `A12` $\rightarrow$ Exactly 1 `201 Created`, 499 `409 Conflict`, 0 `5xx`.
