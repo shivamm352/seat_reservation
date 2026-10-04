@@ -5,8 +5,8 @@ spring:
   # ===== DataSource & HikariCP Connection Pool =====
   datasource:
     url: jdbc:postgresql://localhost:5432/ticketbooking
-    username: tbuser
-    password: tbpassword
+    username: postgres
+    password: postgres
     driver-class-name: org.postgresql.Driver
     hikari:
       # Max connections in pool — sized for free-tier PG (~25 total limit)

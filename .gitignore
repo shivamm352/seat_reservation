@@ -81,3 +81,6 @@ spring.log
 
 # ===== Kotlin (if added later) =====
 .kotlin/
+
+# ===== Local planning & roadmap files (not for version control) =====
+IMPLEMENTATION_ROADMAP.md
